@@ -39,7 +39,7 @@ client.on('messageCreate', async message => {
                 const targetChannel = await client.channels.fetch(targetChannelId);
                 if (targetChannel) {
                     await targetChannel.send({
-                        content: `Image from: **${message.author.tag}**`,
+                        //content: `Image from: **${message.author.tag}**`,
                         files: [attachment.url]
                     });
                     await message.delete();
@@ -64,7 +64,7 @@ client.on('interactionCreate', async interaction => {
         // THIS IS THE CHANGED SECTION
         // We now reply with an object to make the response ephemeral (visible only to the sender).
         await interaction.reply({ 
-            content: `API Latency: **${latency}ms**`,
+            content: `Latency: **${latency}ms**`,
             ephemeral: true 
         });
         

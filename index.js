@@ -1,72 +1,100 @@
-// This allows us to use variables from our .env file
-require('dotenv').config();
-
-// These are the classes we need from the discord.js library
+// --- DEPENDENCIES ---
+require('dotenv').config(); 
+// The main discord.js library
 const { Client, GatewayIntentBits } = require('discord.js');
+// The built-in http module for the keep-alive server
+const http = require('http');
 
-// This imports our channel IDs from the config.json file
+
+// --- CONFIGURATION ---
+const token = process.env.DISCORD_TOKEN;
 const sourceChannelId = process.env.sourceChannelId;
 const targetChannelId = process.env.targetChannelId;
 
-// Create a new bot client
-// We need to tell Discord what our bot intends to do
+
+// --- BOT CLIENT INITIALIZATION ---
 const client = new Client({
     intents: [
-        GatewayIntentBits.Guilds,           // To see servers
-        GatewayIntentBits.GuildMessages,    // To see messages in servers
-        GatewayIntentBits.MessageContent    // To see the content of messages, including attachments
+        GatewayIntentBits.Guilds,           // Required to see server information
+        GatewayIntentBits.GuildMessages,    // Required to see messages
+        GatewayIntentBits.MessageContent    // Required to see message content and attachments (THE MOST IMPORTANT ONE for this bot)
     ]
 });
 
-// This event runs once when the bot successfully logs in
+
+// --- EVENT: BOT IS READY ---
+// This event fires once the bot has successfully logged in and is online.
 client.on('ready', () => {
-    console.log(`Logged in as ${client.user.tag}! The bot is now online.`);
+    console.log(`Logged in as ${client.user.tag}! The bot is now online and ready.`);
 });
 
-// This event runs every time a new message is created in any channel the bot can see
+
+// --- EVENT: MESSAGE IS CREATED (For Image Forwarding) ---
+// This event fires every time a message is sent in a channel the bot can see.
 client.on('messageCreate', async message => {
-    // 1. We check if the message is from the correct source channel
+    // 1. Check if the message is in the correct source channel. If not, ignore it.
     if (message.channel.id !== sourceChannelId) {
-        return; // If not, we ignore the message and do nothing
+        return; 
     }
 
-    // 2. We check if the message was sent by a bot. We don't want the bot to react to itself!
+    // 2. Check if the message was sent by a bot (including ourself). If so, ignore it.
     if (message.author.bot) {
-        return; // If it's a bot, ignore it
+        return; 
     }
 
-    // 3. We check if the message has an attachment (an image, video, file, etc.)
+    // 3. Check if the message actually contains an attachment.
     if (message.attachments.size > 0) {
-        // Get the first attachment from the message
         const attachment = message.attachments.first();
 
-        // Let's make sure the attachment is an image
+        // 4. Verify the attachment is an image.
         if (attachment.contentType?.startsWith('image/')) {
             try {
-                // Find the target channel where we want to send the image
+                // Find the target channel
                 const targetChannel = await client.channels.fetch(targetChannelId);
 
-                // If the channel is found...
                 if (targetChannel) {
-                    // Send the image to the target channel.
-                    // We include the original sender's name for context.
+                    // Send a new message in the target channel
                     await targetChannel.send({
-                        // content: `from: **${message.author.tag}**`,
-                        files: [attachment.url] // The URL of the image to send
+                        //content: `Image from: **${message.author.tag}**`,
+                        files: [attachment.url]
                     });
 
-                    // After successfully sending, delete the original message
+                    // delete the original message.
                     await message.delete();
-                    console.log(`Forwarded an image from ${message.author.tag} and deleted the original.`);
+                    console.log(`Successfully forwarded an image from ${message.author.tag}.`);
                 }
             } catch (error) {
-                console.error("Something went wrong:", error);
-                // Maybe send a message back to the user saying something failed
-                message.reply("Sorry, I couldn't forward your image. An error occurred.");
+                console.error("Error during image forwarding:", error);
+                // Optionally, inform the user that something went wrong.
+                message.reply("Sorry, I encountered an error trying to forward your image.");
             }
         }
     }
 });
 
-// Log in to Discord with your client's token from the .env file
-client.login(process.env.DISCORD_TOKEN);
+
+// --- Slash Command ---.
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isChatInputCommand()) return;
+
+    const { commandName } = interaction;
+
+    //ping command
+    if (commandName === 'ping') {
+        const latency = client.ws.ping;
+        await interaction.reply(`API Latency: **${latency}ms**`);
+        console.log(`Responded to /ping command from ${interaction.user.tag}. Latency: ${latency}ms`);
+    }
+});
+
+
+// --- KEEP ALIVE for RENDER ---
+
+http.createServer((req, res) => {
+  res.writeHead(200, {'Content-Type': 'text/plain'});
+  res.write("M Jinda hu!");
+  res.end();
+}).listen(8080);
+
+
+client.login(token);

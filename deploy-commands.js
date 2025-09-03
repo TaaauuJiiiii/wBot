@@ -1,39 +1,37 @@
-// --- DEPENDENCIES ---
-
-const { REST, Routes } = require('discord.js');
-
+// We now need ApplicationCommandOptionType to define the command's options
+const { REST, Routes, ApplicationCommandOptionType } = require('discord.js');
 require('dotenv').config();
 
-
-// --- COMMAND DEFINITION ---
-
+// The array of command definitions
 const commands = [
     {
         name: 'ping',
         description: "Checks the bot's API latency to Discord.",
     },
-    // can add more command objects here in the future!
-    // {
-    //   name: 'another-command',
-    //   description: 'Does something else.',
-    // },
+    {
+        name: 'delete',
+        description: 'Deletes a specific image message sent by the bot.',
+        options: [
+            {
+                name: 'message_id',
+                description: 'The ID or link of the message to delete',
+                // This defines the option as a string input
+                type: ApplicationCommandOptionType.String,
+                required: true,
+            },
+        ],
+    },
 ];
 
-
-// --- LOAD CREDENTIALS ---
 const token = process.env.DISCORD_TOKEN;
 const clientId = process.env.CLIENT_ID;
 
 if (!token || !clientId) {
     console.error('ERROR: Missing DISCORD_TOKEN or CLIENT_ID in the environment variables.');
-    console.error('Please make sure you have a .env file with these values when running this script locally.');
     process.exit(1);
 }
 
-
-// --- DEPLOYMENT SCRIPT ---
 const rest = new REST({ version: '10' }).setToken(token);
-
 
 (async () => {
     try {

@@ -1,5 +1,6 @@
-// We now need ApplicationCommandOptionType to define the command's options
-const { REST, Routes, ApplicationCommandOptionType } = require('discord.js');
+// We now need ApplicationCommandOptionType for slash command options
+// and ApplicationCommandType for context menu command types.
+const { REST, Routes, ApplicationCommandOptionType, ApplicationCommandType } = require('discord.js');
 require('dotenv').config();
 
 // The array of command definitions
@@ -10,16 +11,20 @@ const commands = [
     },
     {
         name: 'delete',
-        description: 'Deletes a specific image message sent by the bot.',
+        description: 'Deletes a specific image message sent by the bot (by ID/link).',
         options: [
             {
                 name: 'message_id',
                 description: 'The ID or link of the message to delete',
-                // This defines the option as a string input
                 type: ApplicationCommandOptionType.String,
                 required: true,
             },
         ],
+    },
+    // --- NEW CONTEXT MENU COMMAND ---
+    {
+        name: 'Delete Bot Image', // This is the text that will appear in the "Apps" menu
+        type: ApplicationCommandType.Message, // This tells Discord it's a context menu command for messages
     },
 ];
 
@@ -35,14 +40,14 @@ const rest = new REST({ version: '10' }).setToken(token);
 
 (async () => {
     try {
-        console.log(`Started refreshing ${commands.length} application (/) command(s).`);
+        console.log(`Started refreshing ${commands.length} application (/) and context menu command(s).`);
 
         const data = await rest.put(
             Routes.applicationCommands(clientId),
             { body: commands },
         );
 
-        console.log(`Successfully reloaded ${data.length} application (/) command(s).`);
+        console.log(`Successfully reloaded ${data.length} application (/) and context menu command(s).`);
     } catch (error) {
         console.error('An error occurred while deploying commands:', error);
     }

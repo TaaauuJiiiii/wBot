@@ -38,7 +38,6 @@ client.on('messageCreate', async message => {
                 const targetChannel = await client.channels.fetch(targetChannelId);
                 if (targetChannel) {
                     await targetChannel.send({
-                        content: `Image from: **${message.author.tag}**`,
                         files: [attachment.url]
                     });
                     await message.delete();
